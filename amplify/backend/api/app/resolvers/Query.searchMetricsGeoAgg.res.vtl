@@ -1,0 +1,22 @@
+#set( $buckets = [])
+
+#foreach( $entry in $ctx.result.aggregations.geo_segments.buckets.entrySet() )
+  #set( $item = {})
+  #set( $views = $entry.value.views.value)
+  #set( $impressions = $entry.value.impressions.value)
+  #if ( $views > $impressions) #set( $views = $entry.value.impressions.value) #end
+  #set($spend = $entry.value.spend.value)
+  #set($spendString = "abc")
+
+  $util.qr($item.put("name", $entry.key))
+  $util.qr($item.put("views", $views))
+  $util.qr($item.put("clicks", $entry.value.clicks.value))
+  $util.qr($item.put("impressions", $impressions))
+  $util.qr($item.put("spend", $spendString.format("%.2f", $spend)))
+  $util.qr($buckets.add($item))
+#end
+
+$util.toJson({
+  "items": $buckets,
+  "total": $ctx.result.hits.total.value
+})

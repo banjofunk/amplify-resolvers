@@ -1,0 +1,50 @@
+enum MetricType {
+  ORGANIZATION_DAILY
+  TEAM_DAILY
+  BRAND_DAILY
+  CAMPAIGN_DAILY
+  CAMPAIGN_TIME_OF_DAY
+  CAMPAIGN_DAY_OF_WEEK
+  CAMPAIGN_TOP_CITIES
+  CAMPAIGN_TOP_SITES
+  CAMPAIGN_DEVICES
+  CAMPAIGN_AD_NETWORK
+  CAMPAIGN_CREATIVES
+  CAMPAIGN_HEATMAP
+}
+
+type GeoJsonPoint {
+  type: String!
+  coordinates: [Float]!
+}
+
+type Metrics
+  @model(subscriptions: { level: off })
+  @searchable
+  @auth(
+    rules: [
+      { allow: private, provider: iam }
+      { allow: groups, groups: ["Admin", "Media", "Sales"], operations: [read] }
+      { allow: groups, groupsField: "adminGroups", operations: [read] }
+    ]
+  ) {
+  id: ID!
+  adminGroups: [String]
+  createdAt: AWSDateTime
+  updatedAt: AWSDateTime
+  organizationId: ID
+    @index(
+      name: "metricsByIndex"
+      sortKeyFields: ["teamId", "brandId", "campaignId", "createdAt"]
+      queryField: "listMetricsByIndex"
+    )
+  teamId: ID
+  metricType: MetricType
+  metricKey: String
+  clicks: Int
+  views: Int
+  impressions: Int
+  conversions: Int
+  spend: Float
+  geoJson: GeoJsonPoint
+}

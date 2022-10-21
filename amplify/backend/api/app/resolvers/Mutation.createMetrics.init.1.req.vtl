@@ -1,0 +1,33 @@
+## [Start] Initialization default values. **
+$util.qr($ctx.args.put("input", $util.defaultIfNull($ctx.args.input, {})))
+$util.qr($ctx.stash.put("defaultValues", $util.defaultIfNull($ctx.stash.defaultValues, {})))
+
+#set( $createdAt = $util.time.nowISO8601() )
+#set( $id = $util.defaultIfNull($ctx.args.input.get("id"), $util.autoId()) )
+#set( $orgId = $ctx.args.input.get("organizationId") )
+#set( $teamId = $ctx.args.input.get("teamId") )
+
+#set($adminGroups = [])
+#if(!$util.isNull($orgId))
+  $util.qr($adminGroups.add("$orgId:admin"))
+#end
+#if(!$util.isNull($teamId))
+  $util.qr($adminGroups.add("$teamId:admin"))
+#end
+$util.qr($ctx.args.input.put("adminGroups", $adminGroups))
+
+#set($viewerGroups = [])
+#if(!$util.isNull($orgId))
+  $util.qr($viewerGroups.add("$orgId:viewer"))
+#end
+#if(!$util.isNull($teamId))
+  $util.qr($viewerGroups.add("$teamId:viewer"))
+#end
+$util.qr($ctx.stash.defaultValues.put("id", $id))
+$util.qr($ctx.stash.defaultValues.put("createdAt", $createdAt))
+$util.qr($ctx.stash.defaultValues.put("updatedAt", $createdAt))
+$util.toJson({
+  "version": "2018-05-29",
+  "payload": {}
+})
+## [End] Initialization default values. **

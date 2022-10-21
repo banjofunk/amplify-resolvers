@@ -1,0 +1,72 @@
+#set( $indexPath = "/metrics/_search" )
+#set( $nonKeywordFields = [] )
+#set( $segments = $util.defaultIfNull($context.args.segments, []) )
+#set( $filter = [{ "match": { "metricType.keyword": "CAMPAIGN_HEATMAP" }}])
+#set( $filterShapes = [])
+
+#if( $context.args.campaignId )
+  $util.qr($filter.add({ "match": { "campaignId.keyword": $context.args.campaignId }}))
+#end
+
+#set( $aggFilters = {})
+
+#foreach( $segment in $segments )
+  #set( $segId = $segment.get("id"))
+  #set( $segName = $segment.get("name"))
+
+  #set( $shape = { "geo_shape": { "geoJson": { "indexed_shape": { "index": "segment", "id": $segId, "path": "geoJson" }, "relation": "intersects" }}})
+  $util.qr($filterShapes.add($shape))
+  $util.qr($aggFilters.put($segName, $shape))
+#end
+
+#if ( $filterShapes.size() > 0 )
+  $util.qr($filters.add({ "bool": { "should": $filterShapes }}))
+#end
+
+{
+  "version": "2018-05-29",
+  "operation": "GET",
+  "path": "$indexPath",
+  "params": {
+    "body": {
+      #if( $context.args.nextToken )"search_after": [$util.toJson($context.args.nextToken)], #end
+      #if( $context.args.from )"from": $context.args.from, #end
+      "size": #if( $context.args.limit ) $context.args.limit #else 0 #end,
+      "query": {
+        "bool": {
+          "filter": $util.toJson($filter)
+        }
+      },
+      "aggs": {
+        "geo_segments": {
+          "filters": {
+            "other_bucket_key": "other_geos",
+            "filters": $util.toJson($aggFilters)
+          },
+          "aggs": {
+            "impressions": {
+              "sum": {
+                "field": "impressions"
+              }
+            },
+            "views": {
+              "sum": {
+                "field": "views"
+              }
+            },
+            "clicks": {
+              "sum": {
+                "field": "clicks"
+              }
+            },
+            "spend": {
+              "sum": {
+                "field": "spend"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

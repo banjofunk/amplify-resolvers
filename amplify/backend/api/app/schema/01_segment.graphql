@@ -1,0 +1,85 @@
+type Segment
+  @model(subscriptions: { level: off })
+  @searchable
+  @auth(
+    rules: [
+      { allow: private, provider: iam }
+      { allow: groups, groups: ["Admin", "Media"] }
+    ]
+  ) {
+  id: ID!
+  createdAt: AWSDateTime
+  updatedAt: AWSDateTime
+  segmentType: SegmentType!
+  segmentGroup: String
+  segmentPackageName: String!
+  segmentPackageId: ID!
+    @index(
+      name: "byPackagePathKey"
+      queryField: "getSegmentsByPathKey"
+      sortKeyFields: ["pathKey"]
+    )
+  pathKey: String!
+  name: String
+  geoJson: GeoJson
+}
+
+input SearchableStringFilterInput {
+  ne: String
+  gt: String
+  lt: String
+  gte: String
+  lte: String
+  eq: String
+  match: String
+  matchPhrase: String
+  matchPhrasePrefix: String
+  multiMatch: String
+  exists: Boolean
+  wildcard: String
+  regexp: String
+  range: [String]
+}
+
+input SearchableIDFilterInput {
+  ne: ID
+  gt: ID
+  lt: ID
+  gte: ID
+  lte: ID
+  eq: ID
+  match: ID
+  matchPhrase: ID
+  matchPhrasePrefix: ID
+  multiMatch: ID
+  exists: Boolean
+  wildcard: ID
+  regexp: ID
+  range: [ID]
+}
+
+input SearchableSegmentFilterInput {
+  id: SearchableIDFilterInput
+  segmentType: SearchableStringFilterInput
+  segmentGroup: SearchableStringFilterInput
+  segmentPackageId: SearchableIDFilterInput
+  pathKey: SearchableStringFilterInput
+  and: [SearchableSegmentFilterInput]
+  or: [SearchableSegmentFilterInput]
+  not: SearchableSegmentFilterInput
+}
+enum SegmentType {
+  AUDIENCE
+  DMP
+  GEO
+  INVENTORY
+}
+
+type GeoJson {
+  type: String!
+  coordinates: [[[[Float]]]]!
+}
+
+type SearchableSegmentSegmentPathConnection @aws_iam @aws_cognito_user_pools {
+  items: [SearchableBucketAggItem]
+}

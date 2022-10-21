@@ -1,0 +1,51 @@
+type Query {
+  searchDspSegmentPathChildren(
+    filter: SearchableDspSegmentFilterInput
+  ): SearchableDspSegmentSegmentPathConnection @aws_iam @aws_cognito_user_pools
+  searchSegmentPathChildren(
+    filter: SearchableSegmentFilterInput
+  ): SearchableSegmentSegmentPathConnection @aws_iam @aws_cognito_user_pools
+  searchMetricsGeoIntersect(
+    id: ID!
+    limit: Int
+    nextToken: String
+  ): SearchableMetricsConnection @aws_iam @aws_cognito_user_pools
+  searchMetricsGeoAgg(
+    campaignId: ID
+    segments: [SearchSegment]
+    metricKeyRange: [String]
+    limit: Int
+    nextToken: String
+  ): GeoAggItemConnection @aws_iam @aws_cognito_user_pools
+}
+
+input SearchSegment {
+  id: ID!
+  name: String!
+}
+
+type SearchableMetricsConnection @aws_iam @aws_cognito_user_pools {
+  items: [Metrics]!
+  nextToken: String
+  total: Int
+  aggregateItems: [SearchableAggregateResult]!
+}
+
+type GeoAggItem @aws_iam @aws_cognito_user_pools {
+  name: String!
+  impressions: Float
+  clicks: Float
+  views: Float
+  spend: Float
+  conversions: Float
+}
+
+type GeoAggItemConnection @aws_iam @aws_cognito_user_pools {
+  items: [GeoAggItem]
+  total: Int
+}
+
+type SearchableBucketAggItem @aws_iam @aws_cognito_user_pools {
+  key: String
+  doc_count: Int
+}

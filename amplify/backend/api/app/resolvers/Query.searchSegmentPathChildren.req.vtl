@@ -1,0 +1,52 @@
+#set( $indexPath = "/segment/_search" )
+#set( $nonKeywordFields = [] )
+#set( $prefix = $context.args.filter.pathKey.matchPhrasePrefix )
+#if( $util.isNullOrEmpty($context.args.sort) )
+  #set( $sortDirection = "desc" )
+  #set( $sortField = "segmentType" )
+#else
+  #set( $sortDirection = $util.defaultIfNull($context.args.sort.direction, "desc") )
+  #set( $sortField = $util.defaultIfNull($context.args.sort.field, "segmentType") )
+#end
+#if( $nonKeywordFields.contains($sortField) )
+  #set( $sortField0 = $util.toJson($sortField) )
+#else
+  #set( $sortField0 = $util.toJson("${sortField}.keyword") )
+#end
+{
+  "version": "2018-05-29",
+  "operation": "GET",
+  "path": "$indexPath",
+  "params": {
+    "body": {
+      #if( $context.args.nextToken )"search_after": [$util.toJson($context.args.nextToken)], #end
+      #if( $context.args.from )"from": $context.args.from, #end
+      "size": #if( $context.args.limit ) $context.args.limit #else 100 #end,
+      "sort": [{$sortField0: { "order" : $util.toJson($sortDirection) }}],
+      "version": true,
+      "query":#if( $context.args.filter ) $util.transform.toElasticsearchQueryDSL($context.args.filter)
+              #else {
+                "bool": {
+                  "must": [
+                    {
+                      "match": {
+                        "segmentType.keyword": "DMP"
+                      }
+                    }
+                  ]
+                }
+              }#end,
+      "aggs": {
+        "number_of_values": {
+          "terms": {
+            "size": 1000,
+            "script" : {
+                "lang": "painless",
+                "inline": "def m = /#if( $prefix )$prefix > #end(.+?(?<=> |$)).*?/.matcher(doc['pathKey.keyword'].value); return m.matches() ? (doc['name.keyword'].value).substring(\"#if( $prefix )$prefix > #end\".length(), (\"#if( $prefix )$prefix > #end\" + m.group(1)).length()) : \"no match\";"
+            }
+          }
+        }
+      }
+    }
+  }
+}
